@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  admin-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: nest-admin-api
+    command: pnpm run start:dev
+    ports:
+      - '3000:3000'
+    env_file:
+      - ./.env
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - postgresql
+    networks:
+      - admin-api-network
+
+  postgresql:
+    image: postgres
+    container_name: postgresql
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=admindb
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=adminpassword
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+    networks:
+      - admin-api-network
+
+networks:
+  admin-api-network:
+    driver: bridge
+
+volumes:
+  postgresql-data:
+    driver: local
