@@ -1,6 +1,5 @@
 import { AuthGuard } from '@/apps/auth/guard/auth.guard';
-import { CreateUserDto } from '@/apps/users/dto/create-user.dto';
-import { UpdateUserDto } from '@/apps/users/dto/update-user.dto';
+import { CreateUserDto, UpdateUserDto } from '@/apps/users/dto';
 import { UsersService } from '@/apps/users/users.service';
 import { Roles } from '@/common/decorators/role.decorators';
 import { RoleGuard } from '@/common/guards/role.guard';

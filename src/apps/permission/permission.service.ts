@@ -7,7 +7,7 @@ import { PaginationParams } from '@/common/types/pagination.type';
 import { ApiResponse, PaginatedResponse } from '@/common/types/response.type';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class PermissionService {
@@ -94,6 +94,12 @@ export class PermissionService {
       throw new ConflictException('Permission not found');
     }
     return this.permissionRepository.update(id, updatePermissionDto);
+  }
+
+  async findByIds(ids: number[]) {
+    return this.permissionRepository.findBy({
+      id: In(ids),
+    });
   }
 
   async remove(id: number) {

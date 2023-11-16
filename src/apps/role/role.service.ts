@@ -3,23 +3,24 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
+import { CreateRoleDto, UpdateRoleDto } from '@/apps/role/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from '@/apps/role/entities/role.entity';
 import { Repository } from 'typeorm';
 import { ApiResponse, PaginatedResponse } from '@/common/types/response.type';
 import { UsersPaginationParams } from '@/apps/users/types/user.types';
+import { PermissionService } from '@/apps/permission/permission.service';
 
 @Injectable()
 export class RoleService {
   constructor(
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    private readonly permissionService: PermissionService,
   ) {}
 
   async create(
-    createRoleDto: CreateRoleDto,
+    createRoleDto: Omit<CreateRoleDto, 'permission'>,
   ): Promise<ApiResponse<Role> | undefined> {
     const role = this.roleRepository.create(createRoleDto);
     const existingRoleName = this.roleRepository.findOne({
@@ -43,7 +44,6 @@ export class RoleService {
     params: UsersPaginationParams,
   ): Promise<PaginatedResponse<Role[]>> {
     const { page, baseUrl, limit, orderBy } = params;
-
     let order = 'ASC'; // Default order
     let orderField = orderBy;
 
@@ -58,6 +58,7 @@ export class RoleService {
       order: {
         [orderField]: order,
       },
+      relations: ['permissions'],
     });
 
     const totalPages = Math.ceil(total / limit);
@@ -82,7 +83,10 @@ export class RoleService {
   }
 
   async findOne(id: number): Promise<ApiResponse<Role> | undefined> {
-    const role = await this.roleRepository.findOne({ where: { id } });
+    const role = await this.roleRepository.findOne({
+      where: { id },
+      relations: ['permissions'],
+    });
     if (!role) {
       throw new NotFoundException('Role not found');
     }
@@ -93,22 +97,38 @@ export class RoleService {
     };
   }
 
-  async update(id: number, updateRoleDto: UpdateRoleDto): Promise<Role> {
-    const role = await this.findOne(id);
-    if (!role) {
+  async update(
+    id: number,
+    updateRoleDto: UpdateRoleDto,
+  ): Promise<ApiResponse<Role>> {
+    const { data } = await this.findOne(id);
+    if (!data) {
       throw new NotFoundException('Role not found');
     }
-    const existingRoleName = this.roleRepository.findOne({
+    const existingRoleName = await this.roleRepository.findOne({
       where: { name: updateRoleDto.name },
     });
-    const existingRoleId = this.roleRepository.findOne({
+    const existingRoleId = await this.roleRepository.findOne({
       where: { id: updateRoleDto.id },
     });
-    if (existingRoleName || existingRoleId) {
-      throw new ConflictException('Role already exists');
+    if (!existingRoleName || !existingRoleId) {
+      throw new ConflictException('Role not found');
     }
-    const updated = Object.assign(role, updateRoleDto);
-    return this.roleRepository.save(updated);
+    // data.name = updateRoleDto.name ?? data.name;
+
+    // if (updateRoleDto.permission) {
+    //   data.permissions = await this.permissionService.findByIds(
+    //     updateRoleDto.permission,
+    //   );
+    // }
+    const updated = Object.assign(data, updateRoleDto);
+    const updatedRole = await this.roleRepository.save(updated);
+
+    return {
+      success: true,
+      message: 'Role updated successfully',
+      data: updatedRole,
+    };
   }
 
   async remove(id: number): Promise<void> {

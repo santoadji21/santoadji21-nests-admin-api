@@ -1,131 +1,77 @@
+import { RoleService } from '@/apps/role/role.service';
+import { CreateUserDto, UpdateUserDto } from '@/apps/users/dto';
+import { User } from '@/apps/users/entities/user.entity';
+import { AbstractCrudService } from '@/common/services/abstract.crud.service';
+import { AbstractPaginationParams } from '@/common/types/pagination.type';
+import { ApiResponse, PaginatedResponse } from '@/common/types/response.type';
 import {
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { ApiResponse, PaginatedResponse } from '@/common/types/response.type';
-import { User } from '@/apps/users/entities/user.entity';
-import { CreateUserDto } from '@/apps/users/dto/create-user.dto';
-import { UpdateUserDto } from '@/apps/users/dto/update-user.dto';
-import { UsersPaginationParams } from '@/apps/users/types/user.types';
-import { RoleService } from '@/apps/role/role.service';
+import { FindManyOptions, Repository } from 'typeorm';
 
 @Injectable()
-export class UsersService {
+export class UsersService extends AbstractCrudService<
+  User,
+  CreateUserDto,
+  UpdateUserDto,
+  FindManyOptions<User>
+> {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly roleService: RoleService,
-  ) {}
+  ) {
+    super(usersRepository);
+  }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const { password, ...rest } = createUserDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
+  protected get entityName(): string {
+    return 'User';
+  }
+
+  async create(createUserDto: CreateUserDto): Promise<ApiResponse<User>> {
     const userExists = await this.usersRepository.findOne({
       where: { email: createUserDto.email },
     });
-    const roleExists = await this.roleService.findOne(createUserDto.role_id);
     if (userExists) {
       throw new ConflictException('User already exists');
     }
+    const roleExists = await this.roleService.findOne(createUserDto.role_id);
     if (!roleExists) {
       throw new NotFoundException('Role not found');
     }
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const user = this.usersRepository.create({
-      ...rest,
-      role: { id: createUserDto.role_id },
+      ...createUserDto,
       password: hashedPassword,
     });
 
-    return this.usersRepository.save(user);
+    return super.create({
+      ...user,
+      role_id: createUserDto.role_id,
+    });
   }
 
   async paginate(
-    params: UsersPaginationParams,
+    params: AbstractPaginationParams<User>,
   ): Promise<PaginatedResponse<User[]>> {
-    const { page, baseUrl, limit, orderBy } = params;
-
-    let order = 'ASC'; // Default order
-    let orderField = orderBy;
-
-    if (orderBy?.startsWith('-')) {
-      order = 'DESC';
-      orderField = orderBy?.substring(1);
-    }
-
-    const [data, total] = await this.usersRepository.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-      order: {
-        [orderField]: order,
-      },
+    return super.paginate(params, {
       relations: ['role'],
     });
-
-    const totalPages = Math.ceil(total / limit);
-    const hasNextPage = page < totalPages;
-    const hasPreviousPage = page > 1;
-
-    const buildPageUrl = (newPage: number) =>
-      `${baseUrl}/users?page=${newPage}&limit=${limit}&orderBy=${orderBy}`;
-
-    return {
-      success: true,
-      data: data,
-      pagination: {
-        totalItems: total,
-        totalPages: totalPages,
-        currentPage: page,
-        limit: limit,
-        next: hasNextPage ? buildPageUrl(page + 1) : null,
-        prev: hasPreviousPage ? buildPageUrl(page - 1) : null,
-      },
-    };
-  }
-
-  async findOne(id: number): Promise<ApiResponse<User> | undefined> {
-    const user = await this.usersRepository.findOne({
-      where: { id },
-      relations: ['role'],
-    });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return {
-      success: true,
-      message: 'User retrieved successfully',
-      data: user,
-    };
   }
 
   async findByEmail(email: string): Promise<ApiResponse<User> | undefined> {
-    const user = await this.usersRepository.findOne({
-      where: { email },
+    return super.findByEmail(email, {
       relations: ['role'],
     });
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
-    }
-    return {
-      success: true,
-      message: 'User retrieved successfully',
-      data: user,
-    };
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    const updated = Object.assign(user, updateUserDto);
-    return this.usersRepository.save(updated);
-  }
-
-  async remove(id: number): Promise<void> {
-    await this.usersRepository.delete(id);
+  async findOne(id: number): Promise<ApiResponse<User>> {
+    return super.findOne(id, {
+      relations: ['role'],
+    });
   }
 }
