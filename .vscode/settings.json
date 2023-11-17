@@ -19,5 +19,5 @@
     "**/.factorypath": true,
     "**/node_modules": true
   },
-  "cSpell.words": ["timestamptz"]
+  "cSpell.words": ["Minio", "timestamptz"]
 }

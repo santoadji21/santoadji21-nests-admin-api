@@ -10,21 +10,28 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+
 import { ProductsService } from './products.service';
+import { BufferedFile } from '@/common/types/buffer';
+import { CreateProductDto, UpdateProductDto } from '@/apps/products/dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
+  @UseInterceptors(FileInterceptor('image'))
   create(
-    @Body() createProductDto: CreateProductDto,
+    @Body('data') dataString: string,
     @GetUserId() userId: number,
+    @UploadedFile() image: BufferedFile,
   ) {
-    return this.productsService.createProduct(createProductDto, userId);
+    const createProductDto: CreateProductDto = JSON.parse(dataString);
+    return this.productsService.createProduct(createProductDto, userId, image);
   }
 
   @Get()

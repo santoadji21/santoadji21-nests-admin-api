@@ -62,7 +62,7 @@ export class UsersService extends AbstractCrudService<
     params: AbstractPaginationParams<User>,
   ): Promise<PaginatedResponse<User[]>> {
     return super.paginate(params, {
-      relations: ['role', 'products'],
+      relations: ['role'],
     });
   }
 
@@ -74,7 +74,7 @@ export class UsersService extends AbstractCrudService<
 
   async findOne(id: number): Promise<ApiResponse<User>> {
     return super.findOne(id, {
-      relations: ['role', 'role.permissions', 'products'],
+      relations: ['role', 'role.permissions'],
     });
   }
 }

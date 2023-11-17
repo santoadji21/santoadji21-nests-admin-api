@@ -1,3 +1,4 @@
+import { MinioClientModule } from '@/apps/minio-client/minio-client.module';
 import { Permission } from '@/apps/permission/entities/permission.entity';
 import { PermissionService } from '@/apps/permission/permission.service';
 import { Product } from '@/apps/products/entities/product.entity';
@@ -9,6 +10,7 @@ import { User } from '@/apps/users/entities/user.entity';
 import { UsersService } from '@/apps/users/users.service';
 import { JwtCommonModule } from '@/common/modules/jwt-common.module';
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -16,6 +18,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   imports: [
     TypeOrmModule.forFeature([Product, User, Role, Permission]),
     JwtCommonModule,
+    MinioClientModule,
+    ConfigModule,
   ],
   controllers: [ProductsController],
   providers: [
