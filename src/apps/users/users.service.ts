@@ -47,19 +47,22 @@ export class UsersService extends AbstractCrudService<
     const user = this.usersRepository.create({
       ...createUserDto,
       password: hashedPassword,
+      role: roleExists.data,
     });
+    const savedUser = await this.usersRepository.save(user);
 
-    return super.create({
-      ...user,
-      role_id: createUserDto.role_id,
-    });
+    return {
+      success: true,
+      message: 'User created successfully',
+      data: savedUser,
+    };
   }
 
   async paginate(
     params: AbstractPaginationParams<User>,
   ): Promise<PaginatedResponse<User[]>> {
     return super.paginate(params, {
-      relations: ['role'],
+      relations: ['role', 'products'],
     });
   }
 
@@ -71,7 +74,7 @@ export class UsersService extends AbstractCrudService<
 
   async findOne(id: number): Promise<ApiResponse<User>> {
     return super.findOne(id, {
-      relations: ['role'],
+      relations: ['role', 'role.permissions', 'products'],
     });
   }
 }

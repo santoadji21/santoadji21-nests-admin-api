@@ -1,5 +1,6 @@
 import { LoginDto } from '@/apps/auth/dto/login-auth.dto';
 import { UsersService } from '@/apps/users/users.service';
+import { JwtPayload } from '@/common/types/jwt-payload.type';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -27,7 +28,7 @@ export class AuthService {
       throw new NotFoundException('Invalid credentials');
     }
 
-    const payload = {
+    const payload: JwtPayload = {
       id: data.id,
       role: data.role.id ?? 2,
     };

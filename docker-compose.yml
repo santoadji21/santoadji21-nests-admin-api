@@ -33,10 +33,26 @@ services:
     networks:
       - admin-api-network
 
+  minio:
+    image: minio/minio
+    container_name: minio
+    volumes:
+      - minio-data:/data
+    ports:
+      - '9000:9000'
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniopassword
+    command: server /data
+    networks:
+      - admin-api-network
+
 networks:
   admin-api-network:
     driver: bridge
 
 volumes:
   postgresql-data:
+    driver: local
+  minio-data:
     driver: local

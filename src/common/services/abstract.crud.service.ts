@@ -20,7 +20,7 @@ export abstract class AbstractCrudService<
   protected constructor(protected readonly repository: Repository<T>) {}
 
   async create(createDto: CreateDtoType): Promise<ApiResponse<T>> {
-    const entity = this.repository.create(createDto);
+    const entity = await this.repository.create(createDto);
     const savedEntity = await this.repository.save(entity);
     return {
       success: true,
@@ -102,7 +102,7 @@ export abstract class AbstractCrudService<
     }
     return {
       success: true,
-      message: `${this.entityName} found`,
+      message: `${this.entityName} retrieved successfully`,
       data: entity,
     };
   }

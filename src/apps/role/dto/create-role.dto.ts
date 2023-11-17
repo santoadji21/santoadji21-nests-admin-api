@@ -1,4 +1,10 @@
-import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateRoleDto {
   @IsNotEmpty()
@@ -11,5 +17,6 @@ export class CreateRoleDto {
 
   @IsArray()
   @IsNumber({}, { each: true })
+  @IsOptional()
   permission: number[];
 }

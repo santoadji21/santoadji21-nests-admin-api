@@ -22,11 +22,11 @@ export class RoleService {
   async create(
     createRoleDto: Omit<CreateRoleDto, 'permission'>,
   ): Promise<ApiResponse<Role> | undefined> {
-    const role = this.roleRepository.create(createRoleDto);
-    const existingRoleName = this.roleRepository.findOne({
+    const role = await this.roleRepository.create(createRoleDto);
+    const existingRoleName = await this.roleRepository.findOne({
       where: { name: createRoleDto.name },
     });
-    const existingRoleId = this.roleRepository.findOne({
+    const existingRoleId = await this.roleRepository.findOne({
       where: { id: createRoleDto.id },
     });
     if (existingRoleName || existingRoleId) {
