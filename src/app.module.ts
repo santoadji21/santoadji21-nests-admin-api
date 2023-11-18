@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from './apps/products/products.module';
 import { MinioClientModule } from './apps/minio-client/minio-client.module';
 import { ConfigModule } from '@nestjs/config';
+import { OrdersModule } from './apps/orders/orders.module';
 import * as Joi from 'joi';
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import * as Joi from 'joi';
         JWT_EXPIRATION_TIME: Joi.string().required(),
       }),
     }),
+    OrdersModule,
   ],
   controllers: [],
   providers: [],
